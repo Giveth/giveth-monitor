@@ -1,0 +1,55 @@
+version: "3"
+
+services:
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor
+    container_name: cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - giveth-logger
+    restart: always
+
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+      - /:/host:ro,rslave
+    command: 
+      - '--path.rootfs=/host'
+      - '--path.procfs=/host/proc' 
+      - '--path.sysfs=/host/sys'
+      - --collector.filesystem.ignored-mount-points
+      - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
+    ports:
+      - 9100:9100
+    networks:
+      - back-tier
+    restart: always
+    deploy:
+      mode: global
+  
+  promtail:
+    image: grafana/promtail:2.8.3
+    container_name: promtail
+    env_file:
+      - .env
+    volumes:
+      - /var/log:/var/log
+      - /home/devops/giveth-all/logs:/var/giveth/logs
+      - ./promtail-config.yml:/etc/promtail/config.yml
+    command: -config.expand-env=true -config.file=/etc/promtail/config.yml
+
+networks:
+  giveth-logger:
+
+volumes:
+  caddy_data:
+  caddy_config:
