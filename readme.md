@@ -44,5 +44,5 @@ docker-compose down
 ### Restart a service
 
 ```
-docker-compose restart servicename
+docker-compose up -d containername
 ```
