@@ -9,8 +9,11 @@ Consists of:
 - Promtail: Exports application logs for consumption by Loki
 
 ## 1 - Configure and run the monitoring stack
-
-1. Copy `.env.template` to `.env` and fill in the values
+Clone the repo
+```
+git clone https://github.com/Giveth/giveth-monitor.git
+```
+Copy `.env.template` to `.env` and fill in the values
 
 ```
 cp .env.template .env $$ nano .env
