@@ -11,8 +11,6 @@ services:
       - /var/lib/docker/:/var/lib/docker:ro
     ports:
       - "8080:8080"
-    networks:
-      - giveth-logger
     restart: always
 
   node-exporter:
@@ -30,11 +28,11 @@ services:
       - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
     ports:
       - 9100:9100
-    networks:
-      - back-tier
     restart: always
     deploy:
       mode: global
+    networks:
+      - external_network
   
   promtail:
     image: grafana/promtail:2.8.3
@@ -48,8 +46,6 @@ services:
     command: -config.expand-env=true -config.file=/etc/promtail/config.yml
 
 networks:
-  giveth-logger:
-
-volumes:
-  caddy_data:
-  caddy_config:
+  external_network:
+    external:
+      name: giveth-all_giveth

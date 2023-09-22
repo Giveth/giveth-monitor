@@ -9,42 +9,42 @@ clients:
   - url: ${LOKI_URL}/loki/api/v1/push
 
 scrape_configs:
-  - job_name: impact-graph-logs
+  - job_name: dev-impact-graph-logs
     static_configs:
       - targets:
           - localhost
         labels:
-          job: impact-graph-logs
+          job: dev-impact-graph-logs
           __path__: /var/giveth/logs/impact-graph/*
 
-  - job_name: auth-logs
+  - job_name: dev-auth-logs
     static_configs:
       - targets:
           - localhost
         labels:
-          job: auth-logs
+          job: dev-auth-logs
           __path__: /var/giveth/logs/auth/*
 
-  - job_name: notification-center-logs
+  - job_name: dev-notification-center-logs
     static_configs:
       - targets:
           - localhost
         labels:
-          job: notification-center-logs
+          job: dev-notification-center-logs
           __path__: /var/giveth/logs/notification-center/*
 
-  - job_name: giveconomy-notification-service-logs
+  - job_name: dev-giveconomy-notification-service-logs
     static_configs:
       - targets:
           - localhost
         labels:
-          job: giveconomy-notification-service-logs
+          job: dev-giveconomy-notification-service-logs
           __path__: /var/giveth/logs/giveconomy-notification-service/*
 
-  - job_name: api-logs
+  - job_name: dev-api-logs
     static_configs:
       - targets:
           - localhost
         labels:
-          job: api-logs
+          job: dev-api-logs
           __path__: /var/giveth/logs/api/*
