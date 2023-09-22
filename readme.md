@@ -61,3 +61,10 @@ sudo ufw route allow proto tcp from any to any port 8080
 ```
 sudo ufw route allow proto tcp from any to any port 9100
 ```
+
+**allow promtail**
+```
+sudo ufw route allow proto tcp from any to any port 9080
+```
+
+Or just run `allow-ports.sh`
