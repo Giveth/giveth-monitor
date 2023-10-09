@@ -14,7 +14,11 @@ REQUIRED_CONTENT='{
   "debug": true,
   "log-driver": "loki",
   "log-opts": {
+<<<<<<< HEAD
         "loki-url": "https://logs.giveth.io/loki/api/v1/push",
+=======
+        "loki-url": "https://<user_id>:<password>@logs-us-west1.grafana.net/loki/api/v1/push",
+>>>>>>> e4c38a4efcd1421f088a90096f2094646679d76d
         "loki-batch-size": "400"
     }
 }'
