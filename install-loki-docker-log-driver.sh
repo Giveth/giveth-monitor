@@ -12,7 +12,11 @@ docker plugin install grafana/loki-docker-driver:2.9.1 --alias loki --grant-all-
 # Step 4: Check if /etc/docker/daemon.json exists and has the required content
 REQUIRED_CONTENT='{
   "debug": true,
-  "log-driver": "loki"
+  "log-driver": "loki",
+  "log-opts": {
+        "loki-url": "https://<user_id>:<password>@logs-us-west1.grafana.net/loki/api/v1/push",
+        "loki-batch-size": "400"
+    }
 }'
 
 if [[ -e /etc/docker/daemon.json ]]; then
