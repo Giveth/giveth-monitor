@@ -1,5 +1,4 @@
 #!/bin/bash
-source .env
 
 # Step 1: Check if Loki Docker Driver is already installed
 if docker plugin ls | grep -q "loki"; then
@@ -15,7 +14,7 @@ REQUIRED_CONTENT='{
   "debug": true,
   "log-driver": "loki",
   "log-opts": {
-        "loki-url": $LOKI_HOST,
+        "loki-url": "https://loki.logs.giveth.io/loki/api/v1/push",
         "loki-batch-size": "400"
     }
 }'
