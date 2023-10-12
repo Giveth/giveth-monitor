@@ -66,5 +66,10 @@ sudo ufw route allow proto tcp from any to any port 9100
 ```
 sudo ufw route allow proto tcp from any to any port 9080
 ```
+Or just run `01-allow-ports.sh`
 
-Or just run `allow-ports.sh`
+## Install Loki Docker log driver
+
+This is specifically configured to send the logs to the Giveth instance.
+
+Run `02-install-loki-docker-log-driver.sh`
