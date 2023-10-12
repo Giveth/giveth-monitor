@@ -73,3 +73,21 @@ Or just run `01-allow-ports.sh`
 This is specifically configured to send the logs to the Giveth instance.
 
 Run `02-install-loki-docker-log-driver.sh`
+
+## Further configuration
+Have a look at the two config files.
+
+1 - check `docker-compose.yml`:
+
+- correct network to observe other containers:
+```
+networks:
+  external_network:
+    external:
+      name: giveth-all_giveth
+```
+
+2 - check `promtail-config.yml` if you send more than one promtail exporter to your Loki instance:
+
+- the `tenant_id` should be unique
+- the labels for `job name`and `job`should be unique
