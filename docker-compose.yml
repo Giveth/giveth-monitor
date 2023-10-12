@@ -12,6 +12,9 @@ services:
     ports:
       - "8080:8080"
     restart: always
+    networks:
+      - external_network
+
 
   node-exporter:
     image: quay.io/prometheus/node-exporter:latest
@@ -44,8 +47,10 @@ services:
       - /home/devops/giveth-all/logs:/var/giveth/logs
       - ./promtail-config.yml:/etc/promtail/config.yml
     command: -config.expand-env=true -config.file=/etc/promtail/config.yml
+    networks:
+      - external_network
 
 networks:
   external_network:
     external:
-      name: giveth-all_giveth
+      name: local-compose_giveth
