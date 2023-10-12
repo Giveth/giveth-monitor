@@ -53,4 +53,4 @@ services:
 networks:
   external_network:
     external:
-      name: local-compose_giveth
+      name: giveth-all_giveth
