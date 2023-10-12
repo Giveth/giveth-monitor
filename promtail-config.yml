@@ -8,6 +8,8 @@ positions:
 clients:
   - url: ${LOKI_URL}/loki/api/v1/push
 
+tenant_id: dev
+
 scrape_configs:
   - job_name: dev-impact-graph-logs
     static_configs:
