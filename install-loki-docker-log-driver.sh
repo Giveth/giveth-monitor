@@ -3,7 +3,6 @@
 # Step 1: Check if Loki Docker Driver is already installed
 if docker plugin ls | grep -q "loki"; then
     echo "Driver Client already running"
-    exit 1
 fi
 
 # Step 3: Install the Loki Docker Driver
