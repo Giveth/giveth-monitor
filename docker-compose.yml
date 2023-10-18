@@ -47,6 +47,7 @@ services:
       - /home/devops/giveth-all/logs:/var/giveth/logs
       - ./promtail-config.yml:/etc/promtail/config.yml
     command: -config.expand-env=true -config.file=/etc/promtail/config.yml
+    restart: always
     networks:
       - external_network
 
