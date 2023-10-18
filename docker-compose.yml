@@ -54,4 +54,4 @@ services:
 networks:
   external_network:
     external:
-      name: giveth-all_giveth
+      name: ${DOCKER_NETWORK}
