@@ -7,8 +7,7 @@ positions:
 
 clients:
   - url: ${LOKI_URL}/loki/api/v1/push
-
-tenant_id: ${INSTANCE}
+    tenant_id: ${INSTANCE}
 
 scrape_configs:
   - job_name: ${INSTANCE}-impact-graph-logs
