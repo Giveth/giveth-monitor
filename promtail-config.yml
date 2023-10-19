@@ -8,45 +8,45 @@ positions:
 clients:
   - url: ${LOKI_URL}/loki/api/v1/push
 
-tenant_id: dev
+tenant_id: ${INSTANCE}
 
 scrape_configs:
-  - job_name: dev-impact-graph-logs
+  - job_name: ${INSTANCE}-impact-graph-logs
     static_configs:
       - targets:
           - localhost
         labels:
-          job: dev-impact-graph-logs
+          job: ${INSTANCE}-impact-graph-logs
           __path__: /var/giveth/logs/impact-graph/*
 
-  - job_name: dev-auth-logs
+  - job_name: ${INSTANCE}-auth-logs
     static_configs:
       - targets:
           - localhost
         labels:
-          job: dev-auth-logs
+          job: ${INSTANCE}-auth-logs
           __path__: /var/giveth/logs/auth/*
 
-  - job_name: dev-notification-center-logs
+  - job_name: ${INSTANCE}-notification-center-logs
     static_configs:
       - targets:
           - localhost
         labels:
-          job: dev-notification-center-logs
+          job: ${INSTANCE}-notification-center-logs
           __path__: /var/giveth/logs/notification-center/*
 
-  - job_name: dev-giveconomy-notification-service-logs
+  - job_name: ${INSTANCE}-giveconomy-notification-service-logs
     static_configs:
       - targets:
           - localhost
         labels:
-          job: dev-giveconomy-notification-service-logs
+          job: ${INSTANCE}-giveconomy-notification-service-logs
           __path__: /var/giveth/logs/giveconomy-notification-service/*
 
-  - job_name: dev-api-logs
+  - job_name: ${INSTANCE}-api-logs
     static_configs:
       - targets:
           - localhost
         labels:
-          job: dev-api-logs
+          job: ${INSTANCE}-api-logs
           __path__: /var/giveth/logs/api/*
