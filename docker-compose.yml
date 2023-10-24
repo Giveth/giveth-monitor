@@ -17,7 +17,7 @@ services:
 
 
   node-exporter:
-    image: quay.io/prometheus/node-exporter:latest
+    image: quay.io/prometheus/node-exporter:1.6.1
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
