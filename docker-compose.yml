@@ -1,23 +1,8 @@
 version: "3"
 
 services:
-  cadvisor:
-    image: gcr.io/cadvisor/cadvisor
-    container_name: cadvisor
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:rw
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-    ports:
-      - "8080:8080"
-    restart: always
-    networks:
-      - external_network
-
-
   node-exporter:
-    image: quay.io/prometheus/node-exporter:1.6.1
+    image: quay.io/prometheus/node-exporter:v1.6.1
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
@@ -44,7 +29,6 @@ services:
       - .env
     volumes:
       - /var/log:/var/log
-      - /home/devops/giveth-all/logs:/var/giveth/logs
       - ./promtail-config.yml:/etc/promtail/config.yml
     command: -config.expand-env=true -config.file=/etc/promtail/config.yml
     restart: always
@@ -54,4 +38,4 @@ services:
 networks:
   external_network:
     external:
-      name: ${DOCKER_NETWORK}
+      name: external
