@@ -52,3 +52,11 @@ scrape_configs:
         labels:
           job: ${INSTANCE}-api-logs
           __path__: /var/giveth/logs/api/*
+
+  - job_name: ${INSTANCE}-caddy-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: ${INSTANCE}-caddy-logs
+          __path__: /var/giveth/logs/caddy/*
