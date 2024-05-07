@@ -1,5 +1,3 @@
-version: "3"
-
 services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:$CADVISOR_VERSION
@@ -44,6 +42,7 @@ services:
       - .env
     volumes:
       - /var/log:/var/log
+      - /var/run/docker.sock:/var/run/docker.sock
       - /home/devops/giveth-all/logs:/var/giveth/logs
       - ./promtail-config.yml:/etc/promtail/config.yml
     command: -config.expand-env=true -config.file=/etc/promtail/config.yml
@@ -53,5 +52,5 @@ services:
 
 networks:
   external_network:
-    external:
-      name: ${DOCKER_NETWORK}
+    name: ${DOCKER_NETWORK}
+    external: true
