@@ -15,4 +15,3 @@ else
     echo "Operation aborted."
     exit 0
 fi
-
