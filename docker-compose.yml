@@ -41,6 +41,7 @@ services:
     env_file:
       - .env
     volumes:
+      - /tmp/:/tmp/
       - /var/log:/var/log
       - /home/devops/giveth-all/logs:/var/giveth/logs
       - ./promtail-config.yml:/etc/promtail/config.yml
