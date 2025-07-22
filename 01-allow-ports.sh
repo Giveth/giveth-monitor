@@ -1,22 +1,27 @@
 #!/usr/bin/env bash
+# Keep INPUT + FORWARD rules, but wipe any old "ALLOW FWD Anywhere" first.
 
 TRUSTED_IP="165.227.143.82"
 PORTS=(8080 9080 9100)
 
 for p in "${PORTS[@]}"; do
-  #### INPUT (chain that packets hit before DNAT) ####
-  ufw delete allow proto tcp from "$TRUSTED_IP" to any port "$p" 2>/dev/null || true
-  ufw delete deny  proto tcp                to any port "$p" 2>/dev/null || true
-  ufw insert 1 allow proto tcp from "$TRUSTED_IP" to any port "$p"
-  ufw insert 2 deny  proto tcp                to any port "$p"
+  ## INPUT ##
+  ufw --force delete allow proto tcp from "$TRUSTED_IP" to any port "$p" 2>/dev/null || true
+  ufw --force delete deny  proto tcp                     to any port "$p" 2>/dev/null || true
+  ufw --force insert 1 allow proto tcp from "$TRUSTED_IP" to any port "$p"
+  ufw --force insert 2 deny  proto tcp                     to any port "$p"
 
-  #### FORWARD (chain that carries traffic to the container after DNAT) ####
-  ufw route delete allow proto tcp from "$TRUSTED_IP" to any port "$p" 2>/dev/null || true
-  ufw route delete deny  proto tcp                to any port "$p" 2>/dev/null || true
-  ufw route insert 1 allow proto tcp from "$TRUSTED_IP" to any port "$p"
-  ufw route insert 2 deny  proto tcp                to any port "$p"
+  ## FORWARD / route ##
+  # 1) wipe every existing route-rule on that port (with or without a 'from')
+  ufw --force route delete allow proto tcp                     to any port "$p" 2>/dev/null || true
+  ufw --force route delete deny  proto tcp                     to any port "$p" 2>/dev/null || true
+  ufw --force route delete allow proto tcp from "$TRUSTED_IP" to any port "$p" 2>/dev/null || true
+
+  # 2) re-insert clean pair
+  ufw --force route insert 1 allow proto tcp from "$TRUSTED_IP" to any port "$p"
+  ufw --force route insert 2 deny  proto tcp                     to any port "$p"
 done
 
 ufw reload
-echo "== Current rules touching 8080/9080/9100 =="
-ufw status numbered | grep -E ' (8080|9080|9100)/tcp'
+echo -e "\n== Rules now affecting 8080 / 9080 / 9100 =="
+ufw status numbered | grep -E 'FWD|IN' | grep -E ' (8080|9080|9100)/tcp'
