@@ -4,7 +4,7 @@
 TRUSTED_IP="165.227.143.82"
 PORTS=(8080 9080 9100)
 
-# Delete the wide-open forward rules
+# Delete the wide-open forward rules to make sure
 sudo ufw --force route delete allow proto tcp to any port 8080
 sudo ufw --force route delete allow proto tcp to any port 9100
 
