@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Restrict both INPUT and FORWARD traffic on ports 8080 9080 9100
-# so only Prometheus (165.227.143.82) is allowed.
 
 TRUSTED_IP="165.227.143.82"
 PORTS=(8080 9080 9100)
