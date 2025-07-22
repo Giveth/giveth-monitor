@@ -4,6 +4,10 @@
 TRUSTED_IP="165.227.143.82"
 PORTS=(8080 9080 9100)
 
+# Delete the wide-open forward rules
+sudo ufw --force route delete allow proto tcp to any port 8080
+sudo ufw --force route delete allow proto tcp to any port 9100
+
 for p in "${PORTS[@]}"; do
   ## INPUT ##
   ufw --force delete allow proto tcp from "$TRUSTED_IP" to any port "$p" 2>/dev/null || true
