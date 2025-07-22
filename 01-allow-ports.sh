@@ -1,17 +1,24 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# Restrict both INPUT and FORWARD traffic on ports 8080 9080 9100
+# so only Prometheus (165.227.143.82) is allowed.
 
-# Check if ports are already open
-PORTS=(8080 9100 9080)
+TRUSTED_IP="165.227.143.82"
+PORTS=(8080 9080 9100)
 
-echo "Running this will be opening Ports 8080, 9100 and 9080 in ufw."
-read -p "Do you want to continue? (y/n) " answer
+for p in "${PORTS[@]}"; do
+  #### INPUT (chain that packets hit before DNAT) ####
+  ufw delete allow proto tcp from "$TRUSTED_IP" to any port "$p" 2>/dev/null || true
+  ufw delete deny  proto tcp                to any port "$p" 2>/dev/null || true
+  ufw insert 1 allow proto tcp from "$TRUSTED_IP" to any port "$p"
+  ufw insert 2 deny  proto tcp                to any port "$p"
 
-if [[ $answer == "y" ]]; then
-    sudo ufw route allow proto tcp from any to any port 9080
-    sudo ufw route allow proto tcp from any to any port 9100
-    sudo ufw route allow proto tcp from any to any port 8080
-    echo "Ports 8080, 9100 and 9080 opened in ufw."
-else
-    echo "Operation aborted."
-    exit 0
-fi
+  #### FORWARD (chain that carries traffic to the container after DNAT) ####
+  ufw route delete allow proto tcp from "$TRUSTED_IP" to any port "$p" 2>/dev/null || true
+  ufw route delete deny  proto tcp                to any port "$p" 2>/dev/null || true
+  ufw route insert 1 allow proto tcp from "$TRUSTED_IP" to any port "$p"
+  ufw route insert 2 deny  proto tcp                to any port "$p"
+done
+
+ufw reload
+echo "== Current rules touching 8080/9080/9100 =="
+ufw status numbered | grep -E ' (8080|9080|9100)/tcp'
