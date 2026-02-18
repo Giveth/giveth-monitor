@@ -120,9 +120,8 @@ The previous `promtail-config.yml` is kept for reference. To migrate an existing
 3. Restart: `docker-compose up -d`
 4. Verify at `http://<host>:12345` that Alloy is discovering containers
 5. Update firewall rules: run `01-allow-ports.sh` (port changed from 9080 to 12345)
-6. If the Loki Docker log driver was installed, it can be removed to avoid double-ingestion:
+6. If the Loki Docker log driver was previously installed, remove it to avoid double-ingestion:
    ```
-   docker plugin disable loki
-   docker plugin rm loki
+   sudo bash 02-remove-loki-docker-driver.sh
    ```
-   Then remove the `log-driver` and `log-opts` entries from `/etc/docker/daemon.json` and restart Docker.
+   This disables/removes the plugin and cleans up `/etc/docker/daemon.json` (with backup and confirmation).
