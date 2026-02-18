@@ -4,35 +4,83 @@
 
 Consists of:
 
-- cAdvisor: Exports docker container metrics for consumption by Prometheus
-- Node-Exporter: Exports server system metrics for consumption by Prometheus
-- Promtail: Exports application logs for consumption by Loki
+- **cAdvisor**: Exports docker container metrics for consumption by Prometheus
+- **Node-Exporter**: Exports server system metrics for consumption by Prometheus
+- **Grafana Alloy**: Ships application and container logs to Loki (replaces Promtail)
+
+Supports both **Docker Compose** and **Docker Swarm** deployments. In Swarm mode, Alloy extracts stable service-level labels (`swarm_service`, `stack`) so dashboards survive container rescheduling.
 
 ## 1 - Configure and run the monitoring stack
-Clone the repo
+
+Clone the repo:
+
 ```
 git clone https://github.com/Giveth/giveth-monitor.git
 ```
-Copy `.env.template` to `.env` and fill in the values
+
+Copy `.env.template` to `.env` and fill in the values:
 
 ```
-cp .env.template .env $$ nano .env
+cp .env.template .env && nano .env
 ```
 
-## 2 - Promtail configuration
+## 2 - Alloy configuration
 
-*Promtail is the log client that will be shipping the logs from host machines to the Loki Server*
+*Grafana Alloy is the log collector that ships logs from host machines to the Loki server.*
 
-1. Modify the `docker-compose.yml` file to add a new volume for a persistent log directory
-2. Configure the paths of all application logs to monitor in the `promtail-config.yml` file. Out of the box `giveth-monitor` is configured to observe a deployed `giveth-all` stack.
-3. Make sure `.env` had been copied and modified from `.env.template` - promtail depends on a **Loki URL**
+The configuration lives in `alloy-config.alloy` and uses Alloy's River syntax. It collects:
+
+1. **Caddy logs** from `/var/giveth/logs/caddy/*` (static file scraping)
+2. **Docker container logs** via the Docker socket (automatic discovery)
+
+### Labels extracted automatically
+
+| Label | Source | Available in |
+|-------|--------|-------------|
+| `container` | Container name | Compose + Swarm |
+| `logstream` | stdout / stderr | Compose + Swarm |
+| `job` | `logging_jobname` container label | Compose + Swarm |
+| `swarm_service` | `com.docker.swarm.service.name` | Swarm only |
+| `stack` | `com.docker.stack.namespace` | Swarm only |
+| `swarm_task` | `com.docker.swarm.task.name` | Swarm only |
+| `node_id` | `com.docker.swarm.node.id` | Swarm only |
+| `service` | Short service name (without stack prefix) | Swarm only |
+| `compose_service` | `com.docker.compose.service` | Compose only |
+| `compose_project` | `com.docker.compose.project` | Compose only |
+
+### Grafana dashboard tips
+
+- **Swarm deployments**: Use `{swarm_service="mystack_web"}` or `{service="web"}` in LogQL queries. Create dashboard variables with `label_values(swarm_service)`.
+- **Compose deployments**: Use `{compose_service="web"}` or `{container="web-1"}`.
+- **Avoid** filtering by `container` name in Swarm — it changes on every reschedule.
+
+### Environment variables
+
+All credentials are injected via `sys.env()` in the Alloy config. Required variables in `.env`:
+
+- `LOKI_URL` — Loki push endpoint (e.g. `https://loki.mydomain.com`)
+- `INSTANCE` — Tenant ID, unique per monitored instance (e.g. `staging`)
+- `LOKIUSER` — Loki basic auth username
+- `LOKIPASS` — Loki basic auth password
+
+## 3 - Customization
+
+1. Modify `docker-compose.yml` to add volume mounts for additional log directories
+2. Update `alloy-config.alloy` to add more `local.file_match` + `loki.source.file` blocks for additional static log paths
+3. Ensure `.env` has been configured — Alloy depends on a **Loki URL** and credentials
 
 ## Operate
 
-### Start
+### Start (Docker Compose)
 
 ```
 docker-compose up -d
+```
+
+### Start (Docker Swarm)
+
+```
+docker stack deploy -c docker-compose.yml giveth-monitor
 ```
 
 ### Stop
@@ -44,50 +92,37 @@ docker-compose down
 ### Restart a service
 
 ```
-docker-compose up -d containername
+docker-compose up -d servicename
 ```
 
-## Add to a giveth-all host
+### Alloy debugging UI
 
-If the host is configured to run caddy, you will need to open the necessary ports for the monitoring stack:
+Alloy includes a built-in web UI for inspecting component health, discovered targets, and pipeline status:
 
-
-**allow cAdvisor:**
 ```
-sudo ufw route allow proto tcp from any to any port 8080
+http://<host>:12345
 ```
 
-**allow node-exporter:**
-```
-sudo ufw route allow proto tcp from any to any port 9100
-```
+## Firewall configuration
 
-**allow promtail**
-```
-sudo ufw route allow proto tcp from any to any port 9080
-```
-Or just run `01-allow-ports.sh`
+If the host runs Caddy or another reverse proxy, open the necessary ports for the monitoring stack. Run `01-allow-ports.sh` which restricts access to a trusted IP:
 
-## Install Loki Docker log driver
+- **8080** — cAdvisor metrics
+- **12345** — Alloy UI / API
+- **9100** — Node-Exporter metrics
 
-This is specifically configured to send the logs to the Giveth instance.
+## Migration from Promtail
 
-Run `02-install-loki-docker-log-driver.sh`
+The previous `promtail-config.yml` is kept for reference. To migrate an existing deployment:
 
-## Further configuration
-Have a look at the two config files.
-
-1 - check `docker-compose.yml`:
-
-- correct network to observe other containers:
-```
-networks:
-  external_network:
-    external:
-      name: giveth-all_giveth
-```
-
-2 - check `promtail-config.yml` if you send more than one promtail exporter to your Loki instance:
-
-- the `tenant_id` should be unique
-- the labels for `job name`and `job`should be unique
+1. Update `.env`: replace `PROMTAIL_VERSION` with `ALLOY_VERSION=v1.13.1`
+2. Pull the new images: `docker-compose pull`
+3. Restart: `docker-compose up -d`
+4. Verify at `http://<host>:12345` that Alloy is discovering containers
+5. Update firewall rules: run `01-allow-ports.sh` (port changed from 9080 to 12345)
+6. If the Loki Docker log driver was installed, it can be removed to avoid double-ingestion:
+   ```
+   docker plugin disable loki
+   docker plugin rm loki
+   ```
+   Then remove the `log-driver` and `log-opts` entries from `/etc/docker/daemon.json` and restart Docker.

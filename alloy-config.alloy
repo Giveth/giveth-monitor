@@ -1,0 +1,141 @@
+// =============================================================================
+// Grafana Alloy configuration for giveth-monitor
+// Replaces promtail-config.yml — supports both Docker Compose and Docker Swarm
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// Caddy log scraping (static file match)
+// -----------------------------------------------------------------------------
+
+local.file_match "caddy_logs" {
+	path_targets = [{
+		__path__ = "/var/giveth/logs/caddy/*",
+		job      = sys.env("INSTANCE") + "-caddy-logs",
+	}]
+}
+
+loki.source.file "caddy" {
+	targets    = local.file_match.caddy_logs.targets
+	forward_to = [loki.write.default.receiver]
+}
+
+// -----------------------------------------------------------------------------
+// Docker container discovery and log collection
+// -----------------------------------------------------------------------------
+
+discovery.docker "containers" {
+	host             = "unix:///var/run/docker.sock"
+	refresh_interval = "30s"
+}
+
+// Relabeling rules to extract stable identifiers for both Compose and Swarm
+discovery.relabel "container_labels" {
+	targets = []
+
+	// Container name (strip leading slash)
+	rule {
+		source_labels = ["__meta_docker_container_name"]
+		regex         = "/(.*)"
+		target_label  = "container"
+	}
+
+	// Log stream (stdout / stderr)
+	rule {
+		source_labels = ["__meta_docker_container_log_stream"]
+		target_label  = "logstream"
+	}
+
+	// Custom job name label (existing convention: logging_jobname on container)
+	rule {
+		source_labels = ["__meta_docker_container_label_logging_jobname"]
+		target_label  = "job"
+	}
+
+	// --- Docker Swarm labels (present only in Swarm deployments) ---
+
+	// Swarm service name — stable across task rescheduling (e.g. "giveth_web")
+	rule {
+		source_labels = ["__meta_docker_container_label_com_docker_swarm_service_name"]
+		target_label  = "swarm_service"
+	}
+
+	// Stack namespace (e.g. "giveth")
+	rule {
+		source_labels = ["__meta_docker_container_label_com_docker_stack_namespace"]
+		target_label  = "stack"
+	}
+
+	// Swarm task name (e.g. "giveth_web.1.abc123") — useful for per-replica debugging
+	rule {
+		source_labels = ["__meta_docker_container_label_com_docker_swarm_task_name"]
+		target_label  = "swarm_task"
+	}
+
+	// Swarm node ID
+	rule {
+		source_labels = ["__meta_docker_container_label_com_docker_swarm_node_id"]
+		target_label  = "node_id"
+	}
+
+	// Short service name without stack prefix (e.g. "giveth_web" -> "web")
+	rule {
+		source_labels = ["__meta_docker_container_label_com_docker_swarm_service_name"]
+		regex         = "(?:[^_]+_)?(.*)"
+		target_label  = "service"
+	}
+
+	// --- Docker Compose labels (present only in Compose deployments) ---
+
+	// Compose service name (e.g. "web")
+	rule {
+		source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+		target_label  = "compose_service"
+	}
+
+	// Compose project name (e.g. "giveth-all")
+	rule {
+		source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+		target_label  = "compose_project"
+	}
+}
+
+// Collect logs from discovered Docker containers
+loki.source.docker "containers" {
+	host          = "unix:///var/run/docker.sock"
+	targets       = discovery.docker.containers.targets
+	relabel_rules = discovery.relabel.container_labels.rules
+	forward_to    = [loki.process.docker_pipeline.receiver]
+}
+
+// -----------------------------------------------------------------------------
+// Log processing pipeline
+// -----------------------------------------------------------------------------
+
+loki.process "docker_pipeline" {
+	forward_to = [loki.write.default.receiver]
+
+	// Parse Docker JSON log format
+	stage.docker {}
+
+	// Drop logs older than 24 hours
+	stage.drop {
+		older_than          = "24h"
+		drop_counter_reason = "too_old"
+	}
+}
+
+// -----------------------------------------------------------------------------
+// Loki push endpoint
+// -----------------------------------------------------------------------------
+
+loki.write "default" {
+	endpoint {
+		url       = sys.env("LOKI_URL") + "/loki/api/v1/push"
+		tenant_id = sys.env("INSTANCE")
+
+		basic_auth {
+			username = sys.env("LOKIUSER")
+			password = sys.env("LOKIPASS")
+		}
+	}
+}
