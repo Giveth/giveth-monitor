@@ -7,6 +7,8 @@ services:
       - /var/run:/var/run:rw
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
+    logging:
+      driver: json-file
     ports:
       - "8080:8080"
     restart: always
@@ -27,6 +29,8 @@ services:
       - '--path.sysfs=/host/sys'
       - --collector.filesystem.ignored-mount-points
       - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
+    logging:
+      driver: json-file
     ports:
       - 9100:9100
     restart: always
@@ -50,6 +54,8 @@ services:
       - /var/log:/var/log:ro
       - /home/devops/giveth-all/logs:/var/giveth/logs:ro
       - alloy-data:/var/lib/alloy/data
+    logging:
+      driver: json-file
     ports:
       - "12345:12345"
     restart: always
